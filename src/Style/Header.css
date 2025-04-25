@@ -200,12 +200,6 @@
     transition: all 0.3s ease;
     position: relative;
   }
-
-
-
-
-
-
   @media (max-width: 768px) {
     .hero-content h1 {
       font-size: 2rem;
