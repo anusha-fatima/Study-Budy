@@ -1,26 +1,42 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/', 
+  define: {
+    'process.env': {},
+    global: 'window',
+  },
+  optimizeDeps: {
+    include: [
+      'react', 
+      'react-dom',
+      'react-router-dom',
+      'pdfjs-dist',
+      'mammoth'
+    ],
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    }
+  },
   build: {
+    sourcemap: true,
     chunkSizeWarningLimit: 1500,
-    outDir: 'dist',
-    emptyOutDir: true,
     rollupOptions: {
-      input: {
-        main: './index.html', // Changed to object format
-        app: './src/main.jsx' // Explicit entry point
+      output: {
+        manualChunks: {
+          pdf: ['pdfjs-dist', 'mammoth'],
+          react: ['react', 'react-dom', 'react-router-dom'],
+        },
       },
     },
   },
-  optimizeDeps: {
-    exclude: ['pdf-parse', 'mammoth'], 
-    include: ['react', 'react-dom'] 
+  server: {
+    historyApiFallback: true,
   },
   css: {
-    devSourcemap: true 
-  }
+    devSourcemap: true,
+  },
 });

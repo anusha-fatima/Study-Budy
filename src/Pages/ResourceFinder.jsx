@@ -1,8 +1,9 @@
 import React, { useState, useRef } from "react";
 import { FaFileUpload, FaMagic, FaSpinner, FaCopy } from "react-icons/fa";
 import * as mammoth from "mammoth";
-import { PDFDocument } from "pdf-lib";
 import "../Style/ResourceFinder.css";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.1.91/pdf.worker.min.js";
 
 const ResourceFinder = () => {
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -15,18 +16,29 @@ const ResourceFinder = () => {
   const extractText = async (file) => {
     setIsProcessing(true);
     setKeyPoints([]);
-
+  
     try {
       const arrayBuffer = await file.arrayBuffer();
       let text = "";
-
+  
       if (file.type === "application/pdf") {
-        const pdfDoc = await PDFDocument.load(arrayBuffer);
-        const pages = pdfDoc.getPages();
-        for (const page of pages) {
-          const content = await page.getTextContent();
-          text += content.items.map((item) => item.str).join(" ") + " ";
+        const loadingTask = getDocument({ data: arrayBuffer });
+        const pdf = await loadingTask.promise;
+        const pagesPromises = [];
+  
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          pagesPromises.push(
+            pdf.getPage(pageNum).then((page) =>
+              page.getTextContent().then((content) => {
+                return content.items.map((item) => item.str).join(" ");
+              })
+            )
+          );
         }
+  
+        const pagesText = await Promise.all(pagesPromises);
+        text = pagesText.join(" ");
+  
       } else if (file.type.includes("word") || file.name.endsWith(".docx")) {
         const result = await mammoth.extractRawText({ arrayBuffer });
         text = result.value;
@@ -35,7 +47,7 @@ const ResourceFinder = () => {
       } else {
         throw new Error("Unsupported file type");
       }
-
+  
       setExtractedText(text);
       setUploadedFile(file);
     } catch (error) {
