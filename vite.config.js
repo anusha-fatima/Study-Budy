@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/', 
   build: {
+    chunkSizeWarningLimit: 1500,
     outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
@@ -14,7 +15,6 @@ export default defineConfig({
         app: './src/main.jsx' // Explicit entry point
       },
     },
-    chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {
     exclude: ['pdf-parse', 'mammoth'], 
